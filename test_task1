@@ -1,0 +1,99 @@
+// ConsoleApplication1.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
+
+//
+//
+//Приветствуется использование современных стандартов С++
+//Результат должен быть в виде проекта, компилироваться и работать.
+//
+//Необходимо:
+//
+//1.заполнить случайными числами от 1 до 9 значения контейнеров
+//vector[i] и map[i];
+//
+//2.удалить случайное число элементов(не более 15) в каждом
+//контейнере;
+//
+//3.после этого провести синхронизацию, чтобы в vector и map
+//остались только имеющиеся в обоих контейнерах элементы
+//(дубликаты не удалять).
+
+#include "pch.h"
+#include <iostream>
+#include <vector>
+#include <map>
+#include <memory>
+#include <random>
+
+template<class ContT, typename Pred>
+void erase_if(ContT& cont, Pred pred) {
+	auto it = cont.begin();
+	for (; it != std::end(cont);)
+	{
+		if (pred(*it))
+		{
+			cont.erase(it++);
+		}
+		else
+		{
+			it++;
+		}
+	}
+};
+
+int main()
+{
+
+
+
+	
+	std::vector<int> vector1;
+	std::random_device rd;
+	std::map <int, int> map1;
+	std::uniform_int_distribution<int> dist_size(25, 30);//first value not less than 15!
+	std::uniform_int_distribution<int> dist_values(0, 9);
+	//std::cout << "size:= " << dist_size(rd);
+	//std::cout << "values range:= " << dist_values(rd);
+	int size_tmp = dist_size(rd);
+	vector1.resize(size_tmp);
+	for (int i = 0; i < size_tmp; i++) {
+		vector1[i]=dist_values(rd);
+		map1[i] = dist_values(rd);
+	}
+
+
+	std::uniform_int_distribution<int> eraser_map(0, size_tmp); // for map
+	for (int i = 0; i < 15; i++) {
+	std::uniform_int_distribution<int> eraser_vect(0, vector1.size()-1); // for vect, нельзя erase'ить vector.end(), т.к. это outside range, поэтому -1
+		vector1.erase(vector1.begin() + eraser_vect(rd));
+		map1.erase(eraser_map(rd));
+	}
+	
+
+	vector1.erase(std::remove_if(vector1.begin(), vector1.end(), [&map1](int k) {
+		//find_if
+		return map1.end() == std::find_if(map1.begin(), map1.end(), [k](decltype(*map1.begin()) p) { return p.second == k; });
+	}), vector1.end());
+	//--------------------------------------
+
+	//erase_if(map1, [&vector1](auto &k) { return k.second == vector1; });
+	erase_if(map1, [&vector1](const auto& p)
+		{
+			return vector1.end() == std::find_if(vector1.begin(), vector1.end(), [&p](int k) { return p.second == k; });
+			return false;
+		});
+
+
+	std::cout << "\n";
+	for (int i = 0; i < vector1.size(); i++) {
+		std::cout << "vector1[" << i << "]= " << vector1[i] << "\n";
+	}
+
+	std::cout << "\n---------------------------\n";
+	for (int i = 0; i < map1.size(); i++) {
+		std::cout << "map1[" << i << "]= " << map1[i] << "\n";
+	}
+
+    std::cout << "Hello World!\n"; 
+}
+
